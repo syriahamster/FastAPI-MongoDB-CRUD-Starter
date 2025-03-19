@@ -35,5 +35,14 @@ services:
     environment:
       - MONGO_DETAILS=mongodb://mongodb:27017
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - crud
+    ports:
+      - "8080:80"
+
 volumes:
   mongodb_data:
