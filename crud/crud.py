@@ -7,13 +7,13 @@ import os
 
 app = FastAPI()
 
-# MongoDB 연결 정보 (docker-compose로 띄운 컨테이너에 연결)
+# MongoDB connection information (connect to the container started with docker-compose)
 MONGO_DETAILS = os.getenv("MONGO_DETAILS", "mongodb://localhost:27017")
 client = AsyncIOMotorClient(MONGO_DETAILS)
 database = client.testdb
 item_collection = database.get_collection("items")
 
-# ObjectId를 위한 Pydantic 커스텀 타입
+# Custom Pydantic type for ObjectId
 class PyObjectId(ObjectId):
     @classmethod
     def __get_validators__(cls):
@@ -44,7 +44,7 @@ class Item(BaseModel):
             }
         }
 
-# 업데이트 시 사용할 모델 (PUT 시 사용)
+# Model to use for updating (used in PUT)
 class ItemUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
@@ -86,17 +86,17 @@ async def update_item(id: str, item: ItemUpdate):
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid id format")
     
-    # 업데이트할 데이터만 추출 (제공되지 않은 필드는 제외)
+    # Extract only the data to update (exclude fields that are not provided)
     update_data = item.dict(exclude_unset=True)
     
-    # _id 또는 id 필드가 포함되어 있다면 제거 (immutable 필드)
+    # Remove _id or id field if included (immutable field)
     update_data.pop("id", None)
     update_data.pop("_id", None)
     
     if not update_data:
         raise HTTPException(status_code=400, detail="No valid fields provided for update")
     
-    # 비동기 update_one 호출: await를 사용하여 Future 객체가 아닌 실제 결과에 접근합니다.
+    # Asynchronous update_one call: use await to access the actual result instead of the Future object.
     result = await item_collection.update_one({"_id": oid}, {"$set": update_data})
     
     if result.matched_count == 0:
