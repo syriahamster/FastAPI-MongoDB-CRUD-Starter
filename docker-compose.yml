@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo_backups:/data/backup
+
+  backup:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - DATABASE_NAME=testdb
+      - OUTPUT_DIR=/backup
+    volumes:
+      - ./backup_data:/backup
+
+  crud:
+    build:
+      context: ./crud
+      dockerfile: Dockerfile
+    depends_on:
+      - mongodb
+    ports:
+      - "8007:8000"
+    environment:
+      - MONGO_DETAILS=mongodb://mongodb:27017
+
+volumes:
+  mongodb_data:
