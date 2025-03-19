@@ -59,14 +59,14 @@ def item_helper(item) -> dict:
         "description": item.get("description", "")
     }
 
-@app.post("/items/", response_model=Item)
+@app.post("/items", response_model=Item)
 async def create_item(item: Item):
     item = item.dict(by_alias=True)
     new_item = await item_collection.insert_one(item)
     created_item = await item_collection.find_one({"_id": new_item.inserted_id})
     return item_helper(created_item)
 
-@app.get("/items/", response_model=list[Item])
+@app.get("/items", response_model=list[Item])
 async def get_items():
     items = []
     async for item in item_collection.find():
